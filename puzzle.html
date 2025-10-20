@@ -1,0 +1,90 @@
+import pygame
+import random
+import sys
+
+# Initialize Pygame
+pygame.init()
+
+# Screen dimensions
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Hidden Object Puzzle Game")
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+
+# Fonts
+font = pygame.font.SysFont(None, 36)
+
+# Game settings
+levels = 20
+current_level = 1
+objects_per_level = 5
+
+# Object class
+class HiddenObject:
+    def __init__(self, x, y, radius=20):
+        self.x = x
+        self.y = y
+        self.radius = radius
+        self.found = False
+
+    def draw(self, screen):
+        if not self.found:
+            pygame.draw.circle(screen, RED, (self.x, self.y), self.radius)
+
+    def is_clicked(self, pos):
+        px, py = pos
+        distance = ((self.x - px)**2 + (self.y - py)**2)**0.5
+        return distance <= self.radius
+
+# Create objects for each level
+def generate_objects(level):
+    objs = []
+    for _ in range(objects_per_level):
+        x = random.randint(50, WIDTH-50)
+        y = random.randint(50, HEIGHT-50)
+        objs.append(HiddenObject(x, y))
+    return objs
+
+objects = generate_objects(current_level)
+
+# Game loop
+running = True
+while running:
+    screen.fill(WHITE)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            pos = pygame.mouse.get_pos()
+            for obj in objects:
+                if obj.is_clicked(pos):
+                    obj.found = True
+
+    # Draw objects
+    for obj in objects:
+        obj.draw(screen)
+
+    # Check if level complete
+    if all(obj.found for obj in objects):
+        current_level += 1
+        if current_level > levels:
+            screen.fill(WHITE)
+            text = font.render("Congratulations! You completed all levels!", True, BLACK)
+            screen.blit(text, (50, HEIGHT//2))
+        else:
+            objects = generate_objects(current_level)
+
+    # Draw level info
+    level_text = font.render(f"Level: {current_level}", True, BLACK)
+    screen.blit(level_text, (10, 10))
+
+    pygame.display.update()
+
+pygame.quit()
+sys.exit()
